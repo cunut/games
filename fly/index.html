@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>$CUNUT FLY</title>
+    <link rel="icon"
+        href="https://raw.githubusercontent.com/cunut/img/refs/heads/main/53E4E390-3C4E-4EDF-A0DD-C9B158627648.PNG"
+        type="image/x-icon">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, rgb(77, 44, 145), #1e1e2f);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            position: relative;
+        }
+
+
+
+        canvas {
+
+            background-image: url('https://raw.githubusercontent.com/cunut/img/refs/heads/main/A834C3F1-AA99-4FCA-ACB7-2943458F611A.JPEG');
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #000;
+            z-index: 3;
+            display: none;
+        }
+
+        #playButton {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 10px 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffffff;
+            background-color: #00ffa3;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 4;
+        }
+
+        #playButton:hover {
+            background: linear-gradient(135deg, rgb(77, 44, 145), #1e1e2f);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="score"></div>
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <button id="playButton">Play Game</button>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const scoreDiv = document.getElementById("score");
+        const playButton = document.getElementById("playButton");
+
+        const GRAVITY = 0.6;
+        const JUMP = -11;
+        const PIPE_WIDTH = 30;
+        const PIPE_SPACING = 250;
+        const PIPE_HEIGHT = canvas.height;
+
+        const birdImg = new Image();
+        birdImg.src = "https://raw.githubusercontent.com/cunut/img/refs/heads/main/877A6FF5-2B76-43C5-B91D-9B1C72722AE0.PNG";
+
+        let birdY = canvas.height / 2;
+        let birdVelocity = 0;
+        let birdWidth = 40;
+        let birdHeight = 40;
+
+        let pipes = [];
+        let score = 0;
+        let gameStarted = false;
+
+        const music = new Audio("https://github.com/cunut/web/raw/main/PUMPIT.mp3");
+        music.loop = true;
+
+
+        function drawBird() {
+            ctx.drawImage(birdImg, 50, birdY, birdWidth, birdHeight);
+        }
+
+        function drawPipes() {
+            for (let i = 0; i < pipes.length; i++) {
+                let pipe = pipes[i];
+
+                ctx.fillStyle = "#FF0000";
+                ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.topHeight);
+
+                ctx.fillStyle = "#00FF00";
+                ctx.fillRect(pipe.x, pipe.bottomY, PIPE_WIDTH, PIPE_HEIGHT - pipe.bottomY);
+
+                ctx.strokeStyle = "#000000";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(pipe.x + PIPE_WIDTH / 2, pipe.topHeight);
+                ctx.lineTo(pipe.x + PIPE_WIDTH / 2, pipe.topHeight + 50);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(pipe.x + PIPE_WIDTH / 2, pipe.bottomY);
+                ctx.lineTo(pipe.x + PIPE_WIDTH / 2, pipe.bottomY - 50);
+                ctx.stroke();
+            }
+        }
+
+        function generatePipe() {
+            let topHeight = Math.floor(Math.random() * (PIPE_HEIGHT / 2));
+            let bottomY = topHeight + PIPE_SPACING;
+            pipes.push({
+                x: canvas.width,
+                topHeight: topHeight,
+                bottomY: bottomY
+            });
+        }
+
+        function update() {
+            birdVelocity += GRAVITY;
+            birdY += birdVelocity;
+
+            if (birdY > canvas.height - birdHeight) {
+                birdY = canvas.height - birdHeight;
+                birdVelocity = 0;
+            }
+
+            if (birdY < 0) {
+                birdY = 0;
+                birdVelocity = 0;
+            }
+
+            for (let i = 0; i < pipes.length; i++) {
+                pipes[i].x -= 2;
+
+                if (pipes[i].x + PIPE_WIDTH < 0) {
+                    pipes.splice(i, 1);
+                    score++;
+                }
+            }
+
+            for (let i = 0; i < pipes.length; i++) {
+                let pipe = pipes[i];
+
+                if (pipe.x < 50 + birdWidth && pipe.x + PIPE_WIDTH > 50) {
+                    if (birdY < pipe.topHeight || birdY + birdHeight > pipe.bottomY) {
+                        gameOver();
+                    }
+                }
+            }
+
+            if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 150) {
+                generatePipe();
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPipes();
+            drawBird();
+            drawScore();
+        }
+
+        function drawScore() {
+            ctx.font = "24px Arial";
+            ctx.fillStyle = "#000";
+            ctx.fillText("SCORE: " + score, 20, 40);
+        }
+
+        function jump() {
+            birdVelocity = JUMP;
+        }
+
+        function gameOver() {
+            alert("Are You Sure $CUNUT Can " + score + "x ? " + "Let’s play again until 1000x !! Don't forget to: Screenshot your best score, post it on Twitter and tag @cunutsolana");
+            resetGame();
+        }
+
+        function resetGame() {
+            birdY = canvas.height / 2;
+            birdVelocity = 0;
+            pipes = [];
+            score = 0;
+        }
+
+        function gameLoop() {
+            if (gameStarted) {
+                update();
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        playButton.addEventListener("click", () => {
+            gameStarted = true;
+            playButton.style.display = "none";
+            scoreDiv.style.display = "block";
+            music.play();
+            gameLoop();
+        });
+
+        canvas.addEventListener("click", jump);
+    </script>
+</body>
+
+</html>
